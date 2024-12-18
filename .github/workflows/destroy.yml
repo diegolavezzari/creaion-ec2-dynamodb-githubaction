@@ -1,0 +1,47 @@
+name: Destroy EC2 and DynamoDB with Terraform
+
+on:
+  workflow_dispatch:  # Permite disparar el workflow manualmente
+
+jobs:
+  # Fase 1: Eliminar la instancia EC2, DynamoDB y el backend
+  destroy-resources:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.3.0"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Paso 2: Eliminar los recursos con Terraform
+      - name: Destroy Terraform resources
+        run: |
+          terraform init -reconfigure -backend-config="region=us-east-1"
+          terraform destroy -auto-approve
+
+      # Paso 3: Eliminar DynamoDB manualmente (si no se gestionó por Terraform)
+      - name: Delete DynamoDB table manually
+        run: |
+          aws dynamodb delete-table --table-name terraform-state-lock || echo "Table does not exist"
+
+      # Paso 4: Eliminar el bucket de S3 manualmente (si no se gestionó por Terraform)
+      - name: Delete S3 bucket manually
+        run: |
+          aws s3 rm s3://terraform-backup-diego --recursive || echo "Bucket does not exist"
+          aws s3api delete-bucket --bucket terraform-backup-diego --region us-east-1 || echo "Bucket does not exist"
+
+      # Fase 5: Eliminar el backend
+      - name: Delete Terraform state in S3
+        run: |
+          aws s3 rm s3://terraform-backup-diego/backend.tfstate || echo "No previous state found"
