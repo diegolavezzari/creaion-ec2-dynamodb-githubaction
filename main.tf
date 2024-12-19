@@ -23,9 +23,9 @@ resource "aws_instance" "app_server" {
   user_data = <<-EOF
     #!/bin/bash
     sudo yum update -y
-    sudo yum install apache2 -y
-    sudo systemctl start apache2
-    sudo systemctl enable apache2
+    sudo yum install httpd -y
+    sudo systemctl start httpd
+    sudo systemctl enable httpd
   EOF
 
   depends_on = [data.aws_dynamodb_table.terraform_state_lock]
