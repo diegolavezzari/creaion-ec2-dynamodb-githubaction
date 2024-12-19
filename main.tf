@@ -22,8 +22,8 @@ resource "aws_instance" "app_server" {
   # Script de userdata para instalar Apache
   user_data = <<-EOF
     #!/bin/bash
-    sudo apt update -y
-    sudo apt install apache2 -y
+    sudo yum update -y
+    sudo yum install apache2 -y
     sudo systemctl start apache2
     sudo systemctl enable apache2
   EOF
