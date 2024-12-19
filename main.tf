@@ -19,5 +19,14 @@ resource "aws_instance" "app_server" {
     Name = "EC2-bucket-dynamodb"
   }
 
+  # Script de userdata para instalar Apache
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo apt update -y
+    sudo apt install apache2 -y
+    sudo systemctl start apache2
+    sudo systemctl enable apache2
+  EOF
+
   depends_on = [data.aws_dynamodb_table.terraform_state_lock]
 }
